@@ -1,0 +1,73 @@
+# Practical No. 2
+# Title: Dimensionality Reduction Using PCA and LDA
+
+import pandas as pd
+import time
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
+# Load Dataset
+df = pd.read_csv("data.csv")
+
+# Drop Unnecessary Columns
+df.drop(columns=["id", "Unnamed: 32"], errors="ignore", inplace=True)
+
+# Encode Target Variable
+encoder = LabelEncoder()
+df["diagnosis"] = encoder.fit_transform(df["diagnosis"])
+
+# Separate Features and Target
+X = df.drop("diagnosis", axis=1)
+y = df["diagnosis"]
+
+# Split Dataset
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+# Standardization
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# PCA
+pca = PCA(n_components=2)
+
+start_time = time.time()
+
+X_train_pca = pca.fit_transform(X_train)
+X_test_pca = pca.transform(X_test)
+
+model_pca = LogisticRegression(max_iter=1000)
+model_pca.fit(X_train_pca, y_train)
+
+pca_pred = model_pca.predict(X_test_pca)
+pca_time = time.time() - start_time
+
+# LDA
+lda = LinearDiscriminantAnalysis(n_components=1)
+
+start_time = time.time()
+
+X_train_lda = lda.fit_transform(X_train, y_train)
+X_test_lda = lda.transform(X_test)
+
+model_lda = LogisticRegression(max_iter=1000)
+model_lda.fit(X_train_lda, y_train)
+
+lda_pred = model_lda.predict(X_test_lda)
+lda_time = time.time() - start_time
+
+# Accuracy
+pca_accuracy = accuracy_score(y_test, pca_pred)
+lda_accuracy = accuracy_score(y_test, lda_pred)
+
+print("PCA Accuracy:", pca_accuracy)
+print("LDA Accuracy:", lda_accuracy)
+
+print("PCA Time:", pca_time)
+print("LDA Time:", lda_time)
